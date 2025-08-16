@@ -1,10 +1,11 @@
 services:
-  - type: static_site
+  - type: web
     name: humanbaze-web
-    env: static
+    runtime: static
     buildCommand: "npm ci && npm run build"
     staticPublishPath: "dist"
-    pullRequestPreviewsEnabled: true
+    previews:
+      generation: automatic
     envVars:
       - key: NODE_VERSION
         value: "20"
