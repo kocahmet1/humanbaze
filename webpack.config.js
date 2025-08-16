@@ -4,11 +4,22 @@ const webpack = require('webpack');
 const dotenv = require('dotenv');
 
 // Load environment variables from .env file
-const env = dotenv.config().parsed || {};
+const dotenvEnv = dotenv.config().parsed || {};
+
+// Allow REACT_APP_* variables from the real process environment (e.g., Render dashboard)
+const reactAppFromProcess = Object.keys(process.env)
+  .filter((k) => k.startsWith('REACT_APP_'))
+  .reduce((acc, k) => {
+    acc[k] = process.env[k];
+    return acc;
+  }, {});
+
+// Merge .env values with process.env, giving precedence to process.env
+const mergedEnv = { ...dotenvEnv, ...reactAppFromProcess };
 
 // Prepare environment variables for DefinePlugin
-const envKeys = Object.keys(env).reduce((prev, next) => {
-  prev[`process.env.${next}`] = JSON.stringify(env[next]);
+const envKeys = Object.keys(mergedEnv).reduce((prev, next) => {
+  prev[`process.env.${next}`] = JSON.stringify(mergedEnv[next]);
   return prev;
 }, {});
 
@@ -69,7 +80,6 @@ module.exports = {
     }),
     new webpack.DefinePlugin({
       ...envKeys,
-      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
     }),
     new webpack.ProvidePlugin({
       process: 'process/browser',
