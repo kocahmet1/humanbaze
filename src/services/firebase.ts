@@ -7,13 +7,13 @@ import { getAnalytics } from 'firebase/analytics';
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || "AIzaSyBqGDEUQIHIj_VIYKOmNQX2lhxiylQxLB0",
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || "humanbaze-8ea78.firebaseapp.com",
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || "humanbaze-8ea78",
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || "humanbaze-8ea78.appspot.com",
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || "432705637391",
-  appId: process.env.REACT_APP_FIREBASE_APP_ID || "1:432705637391:web:d55df3cba70c21dc12677a",
-  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID || "G-W9J4536Q60"
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase immediately
