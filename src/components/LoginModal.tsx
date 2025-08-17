@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'reac
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
 import { closeModal, openModal } from '../store/slices/uiSlice';
-import { loginWithEmail, loginWithGoogle, loginWithFacebook } from '../store/slices/authSlice';
+import { loginWithEmail, loginWithGoogle } from '../store/slices/authSlice';
 import { theme } from '../styles/theme';
 
 export const LoginModal: React.FC = () => {
@@ -53,20 +53,6 @@ export const LoginModal: React.FC = () => {
             <Text style={styles.socialButtonText}>Continue with Google</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={[styles.socialButton, styles.facebookButton]} 
-            onPress={async () => {
-              try {
-                await dispatch(loginWithFacebook()).unwrap();
-                onClose();
-              } catch (e: any) {
-                Alert.alert('Login Failed', e.message || 'Failed to login with Facebook');
-              }
-            }}
-            disabled={isLoading}
-          >
-            <Text style={styles.socialButtonText}>Continue with Facebook</Text>
-          </TouchableOpacity>
         </View>
 
         <Text style={styles.orText}>OR</Text>

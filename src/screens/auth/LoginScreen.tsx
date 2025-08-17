@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../../store';
-import { loginWithEmail, loginWithGoogle, loginWithFacebook, clearError } from '../../store/slices/authSlice';
+import { loginWithEmail, loginWithGoogle, clearError } from '../../store/slices/authSlice';
 import { theme } from '../../styles/theme';
 
 export const LoginScreen: React.FC = () => {
@@ -48,14 +48,6 @@ export const LoginScreen: React.FC = () => {
     }
   };
 
-  const handleFacebookLogin = async () => {
-    try {
-      await dispatch(loginWithFacebook()).unwrap();
-    } catch (err: any) {
-      Alert.alert('Login Failed', err.message || 'Failed to login with Facebook');
-    }
-  };
-
   const navigateToRegister = () => {
     dispatch(clearError());
     window.location.hash = '#/register';
@@ -81,13 +73,6 @@ export const LoginScreen: React.FC = () => {
             <Text style={styles.socialButtonText}>Continue with Google</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={[styles.socialButton, styles.facebookButton]} 
-            onPress={handleFacebookLogin}
-            disabled={isLoading}
-          >
-            <Text style={styles.socialButtonText}>Continue with Facebook</Text>
-          </TouchableOpacity>
         </View>
 
         <Text style={styles.orText}>OR</Text>

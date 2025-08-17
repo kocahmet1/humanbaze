@@ -47,7 +47,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ onUserPress }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Leaderboard</Text>
+        <Text style={styles.title}>Latest Contributors</Text>
         
         <View style={styles.periodSelector}>
           <TouchableOpacity
