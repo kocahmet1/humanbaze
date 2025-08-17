@@ -3,12 +3,12 @@ import { storage } from './firebase';
 
 /**
  * Upload an image file for an entry
- * Now uses Firebase Storage by default. Base64 kept as fallback.
+ * Uses base64 by default. Firebase Storage is optional and can be enabled later.
  */
 export async function uploadEntryImage(
   userId: string,
   file: File,
-  useFirebaseStorage: boolean = true
+  useFirebaseStorage: boolean = false
 ): Promise<{ url: string }> {
   try {
     // Validate file type
