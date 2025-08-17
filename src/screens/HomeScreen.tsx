@@ -22,7 +22,7 @@ import { ArticleCard } from '../components/ArticleCard';
 import { Leaderboard } from '../components/Leaderboard';
 import { CreateArticleModal } from '../components/CreateArticleModal';
 import { openModal } from '../store/slices/uiSlice';
-
+import { MobileTopNav } from '../components/MobileTopNav';
 
 export const HomeScreen: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -49,19 +49,52 @@ export const HomeScreen: React.FC = () => {
     // Mobile layout - single column
     return (
       <View style={styles.container}>
-        <ScrollView style={styles.mobileContainer}>
-          <SearchBar />
-          <SearchResults />
-          <LoginWidget />
-          
-          <View style={styles.feedContainer}>
-            <Text style={styles.sectionTitle}>Recent Entries</Text>
-            {feedEntries.map((entry) => (
-              <ArticleCard key={entry.id} entry={entry} />
-            ))}
+        <ScrollView style={styles.mobileContainer} contentContainerStyle={styles.mobileContent}>
+          <MobileTopNav />
+
+          <View style={styles.mobileSection}>
+            <LoginWidget />
           </View>
-          
-          <Leaderboard onUserPress={handleUserPress} />
+
+          <View style={[styles.recentEntriesContainer, styles.mobileSection] }>
+            <Text style={styles.sectionTitle}>
+              {activeNavItem === 'popular' ? 'Popular (last 24h)' : 'Most Recent Entries'}
+            </Text>
+            <View style={styles.entriesListMobile}>
+              {(activeNavItem === 'popular' ? popularArticles24h : recentArticles).slice(0, 6).map((article) => (
+                <View key={article.id} style={styles.entryItem}>
+                  <Text
+                    style={styles.entryTitle}
+                    numberOfLines={2}
+                    onPress={() => (window.location.hash = `#/article/${encodeURIComponent(article.id)}`)}
+                  >
+                    {article.title}
+                  </Text>
+                  <View style={styles.countBadge}>
+                    <Text style={styles.countBadgeText}>
+                      {activeNavItem === 'popular'
+                        ? (popularCounts24h[article.id] ?? 0)
+                        : (article?.stats?.entries ?? 0)}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.feedContainer}>
+            {entriesLoading ? (
+              <Text style={styles.loadingText}>Loading entries...</Text>
+            ) : (
+              feedEntries.map((entry) => (
+                <ArticleCard key={entry.id} entry={entry} />
+              ))
+            )}
+          </View>
+
+          <View style={styles.mobileSection}>
+            <Leaderboard onUserPress={handleUserPress} />
+          </View>
         </ScrollView>
       </View>
     );
@@ -142,6 +175,13 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: theme.spacing.md,
   },
+  mobileContent: {
+    paddingVertical: theme.spacing.md,
+    gap: theme.spacing.lg,
+  },
+  mobileSection: {
+    marginTop: theme.spacing.sm,
+  },
   mainContent: {
     flex: 1,
     flexDirection: 'row',
@@ -192,6 +232,9 @@ const styles = StyleSheet.create({
   },
   entriesList: {
     maxHeight: 360,
+  },
+  entriesListMobile: {
+    // Unbounded height for mobile recent list
   },
   entryItem: {
     flexDirection: 'row',

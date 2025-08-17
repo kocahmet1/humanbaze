@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Provider } from 'react-redux';
+import { Provider, useDispatch } from 'react-redux';
 import { store } from './store';
 import { HomeScreen } from './screens/HomeScreen';
 import { initializeFirebase } from './services/firebase';
@@ -17,6 +17,24 @@ import { LoginModal } from './components/LoginModal';
 import { RegisterModal } from './components/RegisterModal';
 import { ThemeProvider } from './components/ThemeProvider';
 import { ThemeToggle } from './components/ThemeToggle';
+import { setScreenSize } from './store/slices/uiSlice';
+
+// Keeps ui.isMobile and ui.isTablet in sync with window width
+function ScreenSizeListener() {
+  const dispatch = useDispatch();
+  useEffect(() => {
+    const update = () => {
+      const w = typeof window !== 'undefined' ? window.innerWidth : 1200;
+      const isMobile = w < theme.breakpoints.mobile;
+      const isTablet = w >= theme.breakpoints.mobile && w < theme.breakpoints.desktop;
+      dispatch(setScreenSize({ isMobile, isTablet }));
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, [dispatch]);
+  return null;
+}
 
 // Initialize Firebase
 initializeFirebase();
@@ -76,6 +94,7 @@ const App: React.FC = () => {
   return (
     <Provider store={store}>
       <ThemeProvider>
+        <ScreenSizeListener />
         <View style={styles.container}>
           <View style={styles.topBar}>
             <ThemeToggle />
