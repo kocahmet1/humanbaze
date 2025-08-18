@@ -11,6 +11,8 @@ import { theme } from '../styles/theme';
 import { LikeIcon, DislikeIcon, ShareIcon } from './icons';
 import { articlesService } from '../services/articles';
 import { usersService } from '../services/users';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store';
 
 interface ArticleCardProps {
   entry: Entry;
@@ -22,6 +24,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ entry, onPress }) => {
   const [user, setUser] = useState<User | null>(null);
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [canExpand, setCanExpand] = useState<boolean>(false);
+  const { isMobile } = useSelector((s: RootState) => s.ui);
 
   useEffect(() => {
     // Load article and user to render the card like the reference layout
@@ -145,14 +148,16 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ entry, onPress }) => {
       <View style={styles.metaBar}>
         <View style={styles.metaLeft}>
           <Text style={styles.metaPrefix}>in article</Text>
-          <TouchableOpacity
-            onPress={() => (window.location.hash = `#/article/${encodeURIComponent(entry.articleId)}`)}
-            style={styles.articleTitleWrapper}
-          >
-            <Text style={styles.articleTitle}>
-              {article?.title || 'Untitled article'}
-            </Text>
-          </TouchableOpacity>
+          {!isMobile && (
+            <TouchableOpacity
+              onPress={() => (window.location.hash = `#/article/${encodeURIComponent(entry.articleId)}`)}
+              style={styles.articleTitleWrapper}
+            >
+              <Text style={styles.articleTitle}>
+                {article?.title || 'Untitled article'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
         <View style={styles.metaRight}>
           <Text style={styles.metaStarted}>started {formatDate(entry.createdAt)}</Text>
@@ -168,6 +173,18 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ entry, onPress }) => {
           </View>
         </View>
       </View>
+
+      {/* Mobile: Title below meta row with ellipsis */}
+      {isMobile && (
+        <TouchableOpacity
+          onPress={() => (window.location.hash = `#/article/${encodeURIComponent(entry.articleId)}`)}
+          style={styles.mobileTitleWrapper}
+        >
+          <Text style={styles.mobileArticleTitle} numberOfLines={2} ellipsizeMode="tail">
+            {article?.title || 'Untitled article'}
+          </Text>
+        </TouchableOpacity>
+      )}
 
       {/* Content row: copy + optional media on right */}
       <View style={styles.content}>{renderContent()}</View>
@@ -270,6 +287,18 @@ const styles = StyleSheet.create({
     '&:hover': {
       opacity: 0.8,
     },
+  },
+  mobileTitleWrapper: {
+    marginTop: -theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+  },
+  mobileArticleTitle: {
+    backgroundImage: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.accent} 100%)`,
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.bold as any,
+    lineHeight: 24,
   },
   metaStarted: {
     color: theme.colors.textLight,
