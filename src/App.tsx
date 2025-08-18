@@ -15,6 +15,7 @@ import { SettingsScreen } from './screens/SettingsScreen';
 import { globalStyles } from './styles/globalStyles';
 import { LoginModal } from './components/LoginModal';
 import { RegisterModal } from './components/RegisterModal';
+import { CreateArticleModal } from './components/CreateArticleModal';
 import { ThemeProvider } from './components/ThemeProvider';
 import { ThemeToggle } from './components/ThemeToggle';
 import { setScreenSize } from './store/slices/uiSlice';
@@ -117,6 +118,7 @@ const App: React.FC = () => {
         {/* Global modals */}
         <LoginModal />
         <RegisterModal />
+        <CreateArticleModal />
         </View>
       </ThemeProvider>
     </Provider>

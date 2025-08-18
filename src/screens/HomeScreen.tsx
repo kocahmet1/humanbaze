@@ -160,7 +160,6 @@ export const HomeScreen: React.FC = () => {
           </View>
         )}
       </View>
-      <CreateArticleModal />
     </View>
   );
 };

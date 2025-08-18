@@ -56,6 +56,10 @@ export const ArticleDetailScreen: React.FC<{ articleId: string }> = ({ articleId
           </>
         )}
         <EntryComposer articleId={articleId} />
+        {/* Mobile: show user actions including New Title */}
+        <View style={styles.section}>
+          <LoginWidget />
+        </View>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Entries</Text>
           {entries.length === 0 ? (
@@ -130,7 +134,7 @@ export const ArticleDetailScreen: React.FC<{ articleId: string }> = ({ articleId
                     </View>
                   </View>
                   
-                  <View style={styles.entriesList}>
+                  <View style={styles.entriesListContainer}>
                     {entries.length === 0 ? (
                       <View style={styles.emptyState}>
                         <Text style={styles.emptyStateText}>No entries yet</Text>
@@ -257,7 +261,7 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.sm,
     fontWeight: theme.fonts.weights.semibold as any,
   },
-  entriesList: {
+  entriesListContainer: {
     marginTop: theme.spacing.xs,
   },
   
