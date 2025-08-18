@@ -11,8 +11,9 @@ import { theme } from '../styles/theme';
 import { LikeIcon, DislikeIcon, ShareIcon } from './icons';
 import { articlesService } from '../services/articles';
 import { usersService } from '../services/users';
-import { useSelector } from 'react-redux';
-import { RootState } from '../store';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState, AppDispatch } from '../store';
+import { likeEntry, removeLikeDislike } from '../store/slices/entriesSlice';
 
 interface ArticleCardProps {
   entry: Entry;
@@ -20,11 +21,15 @@ interface ArticleCardProps {
 }
 
 export const ArticleCard: React.FC<ArticleCardProps> = ({ entry, onPress }) => {
+  const dispatch = useDispatch<AppDispatch>();
   const [article, setArticle] = useState<Article | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [canExpand, setCanExpand] = useState<boolean>(false);
   const { isMobile } = useSelector((s: RootState) => s.ui);
+  const authUser = useSelector((s: RootState) => s.auth.user);
+  const currentUserId = authUser?.id;
+  const isLiked = currentUserId ? entry.interactions.likes.includes(currentUserId) : false;
 
   useEffect(() => {
     // Load article and user to render the card like the reference layout
@@ -208,9 +213,26 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ entry, onPress }) => {
             <Text style={styles.readMoreText}>Read More</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.pillAction}>
-            <LikeIcon color={theme.colors.primary} size={14} />
-            <Text style={styles.pillActionText}>Like</Text>
+          <TouchableOpacity
+            style={[
+              styles.pillAction,
+              isLiked && { borderColor: theme.colors.success, backgroundColor: `${theme.colors.success}15` },
+            ]}
+            onPress={async () => {
+              if (!currentUserId) return;
+              if (isLiked) await dispatch(removeLikeDislike({ entryId: entry.id, userId: currentUserId })).unwrap();
+              else await dispatch(likeEntry({ entryId: entry.id, userId: currentUserId })).unwrap();
+            }}
+          >
+            <LikeIcon color={isLiked ? theme.colors.success : theme.colors.primary} size={14} />
+            <Text
+              style={[
+                styles.pillActionText,
+                isLiked && { color: theme.colors.success, fontWeight: '700' },
+              ]}
+            >
+              {entry.stats.likes > 0 ? entry.stats.likes : 'Like'}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>

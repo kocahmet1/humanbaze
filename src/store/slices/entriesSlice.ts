@@ -20,6 +20,13 @@ const initialState: EntriesState = {
   lastDoc: null,
 };
 
+// Helper: sort by likes desc, then createdAt desc
+const sortEntries = (a: Entry, b: Entry) => {
+  const likeDiff = (b.stats?.likes || 0) - (a.stats?.likes || 0);
+  if (likeDiff !== 0) return likeDiff;
+  return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+};
+
 // Async thunks
 export const fetchEntriesByArticleId = createAsyncThunk(
   'entries/fetchEntriesByArticleId',
@@ -165,7 +172,7 @@ const entriesSlice = createSlice({
       })
       .addCase(fetchFeedEntries.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.feedEntries = action.payload.entries;
+        state.feedEntries = [...action.payload.entries].sort(sortEntries);
         state.hasMore = action.payload.hasMore;
         state.lastDoc = action.payload.lastDoc;
       })
@@ -213,43 +220,25 @@ const entriesSlice = createSlice({
     builder
       .addCase(likeEntry.fulfilled, (state, action) => {
         const updatedEntry = action.payload;
-        
-        // Update in both arrays
-        const updateEntry = (entry: Entry) => {
-          if (entry.id === updatedEntry.id) {
-            entry.interactions = updatedEntry.interactions;
-            entry.stats = updatedEntry.stats;
-          }
-        };
-        
-        state.entries.forEach(updateEntry);
-        state.feedEntries.forEach(updateEntry);
+        // Replace item refs to trigger rerenders
+        state.entries = state.entries.map(e => e.id === updatedEntry.id ? updatedEntry : e);
+        state.feedEntries = state.feedEntries
+          .map(e => e.id === updatedEntry.id ? updatedEntry : e)
+          .sort(sortEntries);
       })
       .addCase(dislikeEntry.fulfilled, (state, action) => {
         const updatedEntry = action.payload;
-        
-        const updateEntry = (entry: Entry) => {
-          if (entry.id === updatedEntry.id) {
-            entry.interactions = updatedEntry.interactions;
-            entry.stats = updatedEntry.stats;
-          }
-        };
-        
-        state.entries.forEach(updateEntry);
-        state.feedEntries.forEach(updateEntry);
+        state.entries = state.entries.map(e => e.id === updatedEntry.id ? updatedEntry : e);
+        state.feedEntries = state.feedEntries
+          .map(e => e.id === updatedEntry.id ? updatedEntry : e)
+          .sort(sortEntries);
       })
       .addCase(removeLikeDislike.fulfilled, (state, action) => {
         const updatedEntry = action.payload;
-        
-        const updateEntry = (entry: Entry) => {
-          if (entry.id === updatedEntry.id) {
-            entry.interactions = updatedEntry.interactions;
-            entry.stats = updatedEntry.stats;
-          }
-        };
-        
-        state.entries.forEach(updateEntry);
-        state.feedEntries.forEach(updateEntry);
+        state.entries = state.entries.map(e => e.id === updatedEntry.id ? updatedEntry : e);
+        state.feedEntries = state.feedEntries
+          .map(e => e.id === updatedEntry.id ? updatedEntry : e)
+          .sort(sortEntries);
       });
   },
 });

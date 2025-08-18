@@ -110,7 +110,7 @@ class EntriesService {
 
       const entries: Entry[] = [];
       querySnapshot.forEach((doc) => {
-        const data = doc.data();
+        const data: any = doc.data();
         entries.push({
           id: doc.id,
           ...data,
@@ -144,13 +144,24 @@ class EntriesService {
     try {
       let q: any;
       try {
+        // Prefer ordering by likes desc, then recent
         q = query(
           this.entriesCollection,
+          orderBy('stats.likes', 'desc'),
           orderBy('createdAt', 'desc'),
           limit(limitCount)
         );
       } catch {
-        q = query(this.entriesCollection, limit(limitCount));
+        // Fallback to simple query if composite index is missing
+        try {
+          q = query(
+            this.entriesCollection,
+            orderBy('createdAt', 'desc'),
+            limit(limitCount)
+          );
+        } catch {
+          q = query(this.entriesCollection, limit(limitCount));
+        }
       }
 
       if (userId) {
@@ -176,8 +187,12 @@ class EntriesService {
         } as Entry);
       });
 
-      // Ensure newest first when fallback is used
-      entries.sort((a, b) => (new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+      // Ensure ordering: most likes first, tie-breaker by most recent
+      entries.sort((a, b) => {
+        const likeDiff = (b.stats?.likes || 0) - (a.stats?.likes || 0);
+        if (likeDiff !== 0) return likeDiff;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
 
       const hasMore = querySnapshot.docs.length === limitCount;
       const newLastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
