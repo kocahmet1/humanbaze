@@ -75,6 +75,17 @@ class AdminService {
     await updateDoc(ref, { content, updatedAt: serverTimestamp() });
   }
 
+  async getArticleById(articleId: string): Promise<any | null> {
+    const ref = doc(db, 'articles', articleId);
+    const snap = await getDoc(ref);
+    return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+  }
+
+  async updateArticleTitle(articleId: string, newTitle: string): Promise<void> {
+    const ref = doc(db, 'articles', articleId);
+    await updateDoc(ref, { title: newTitle, slug: this.createSlug(newTitle), lastUpdated: serverTimestamp() });
+  }
+
   async deleteArticleAndEntries(articleId: string): Promise<{ deletedEntries: number }> {
     // Delete all entries for this article, then the article itself
     const entriesQ = query(collection(db, 'entries'), where('articleId', '==', articleId));

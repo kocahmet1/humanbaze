@@ -26,6 +26,7 @@ export const AdminScreen: React.FC = () => {
   const [showJSONImportModal, setShowJSONImportModal] = useState(false);
   const [showNewsIngestion, setShowNewsIngestion] = useState(false);
   const [showManualIngestion, setShowManualIngestion] = useState(false);
+  const [reportEdits, setReportEdits] = useState<Record<string, { entryContent?: string; articleTitle?: string; loading?: boolean; note?: string }>>({});
   const user = useSelector((s: RootState) => s.auth.user);
 
   useEffect(() => {
@@ -34,6 +35,8 @@ export const AdminScreen: React.FC = () => {
       setCounts(c);
       const r = await adminService.listPendingReports();
       setReports(r);
+      // Preload details for reported items to enable inline editing
+      await preloadReportDetails(r);
       await loadArticles(true);
     })();
   }, []);
@@ -61,6 +64,58 @@ export const AdminScreen: React.FC = () => {
   const resetMonthly = async () => {
     await adminService.resetMonthlyPoints();
     alert('Monthly points reset');
+  };
+
+  const preloadReportDetails = async (pending: any[]) => {
+    if (!pending?.length) return;
+    // mark all as loading
+    setReportEdits((prev) => ({
+      ...prev,
+      ...Object.fromEntries(pending.map((r) => [r.id, { ...prev[r.id], loading: true }]))
+    }));
+    await Promise.all(pending.map(async (r) => {
+      try {
+        if (r.entryId) {
+          const entry = await adminService.getEntryById(r.entryId);
+          setReportEdits((prev) => ({
+            ...prev,
+            [r.id]: { ...prev[r.id], entryContent: entry?.content || '', loading: false }
+          }));
+        }
+        if (r.articleId) {
+          const article = await adminService.getArticleById(r.articleId);
+          setReportEdits((prev) => ({
+            ...prev,
+            [r.id]: { ...prev[r.id], articleTitle: article?.title || '', loading: false }
+          }));
+        }
+      } catch (e) {
+        setReportEdits((prev) => ({
+          ...prev,
+          [r.id]: { ...prev[r.id], loading: false, note: 'Failed to load details' }
+        }));
+      }
+    }));
+  };
+
+  const updateReportEditField = (reportId: string, field: 'entryContent' | 'articleTitle', value: string) => {
+    setReportEdits((prev) => ({ ...prev, [reportId]: { ...prev[reportId], [field]: value } }));
+  };
+
+  const saveReportEdit = async (r: any) => {
+    try {
+      if (r.entryId && reportEdits[r.id]?.entryContent !== undefined) {
+        await adminService.updateEntryContent(r.entryId, reportEdits[r.id]?.entryContent || '');
+      }
+      if (r.articleId && reportEdits[r.id]?.articleTitle !== undefined) {
+        await adminService.updateArticleTitle(r.articleId, reportEdits[r.id]?.articleTitle || '');
+      }
+      // Mark the report resolved after editing
+      await adminService.resolveReport(r.id, 'skip');
+      setReports((prev) => prev.filter((x) => x.id !== r.id));
+    } catch (e) {
+      setReportEdits((prev) => ({ ...prev, [r.id]: { ...prev[r.id], note: 'Save failed' } }));
+    }
   };
 
   const fetchEntry = async () => {
@@ -260,11 +315,30 @@ export const AdminScreen: React.FC = () => {
             <Text style={styles.reportText}>{r.reason || r.subject || 'Report'}</Text>
             {r.entryId && <Text style={styles.note}>Entry ID: {r.entryId}</Text>}
             {r.articleId && <Text style={styles.note}>Article ID: {r.articleId}</Text>}
+            {!!reportEdits[r.id]?.loading && <Text style={styles.note}>Loading…</Text>}
+            {r.entryId && (
+              <TextInput
+                placeholder="Edit entry content"
+                value={reportEdits[r.id]?.entryContent ?? ''}
+                onChangeText={(t) => updateReportEditField(r.id, 'entryContent', t)}
+                style={[styles.input, { height: 100, marginTop: 8 }]} multiline
+              />
+            )}
+            {r.articleId && (
+              <TextInput
+                placeholder="Edit article title"
+                value={reportEdits[r.id]?.articleTitle ?? ''}
+                onChangeText={(t) => updateReportEditField(r.id, 'articleTitle', t)}
+                style={[styles.input, { marginTop: 8 }]}
+              />
+            )}
             <View style={styles.row}>
               {r.entryId && <Button label="Delete Entry" onPress={() => resolve(r.id, 'delete_entry')} />} 
               {r.articleId && <Button label="Delete Article" onPress={() => resolve(r.id, 'delete_article')} />} 
+              {(r.entryId || r.articleId) && <Button label="Save & Resolve" onPress={() => saveReportEdit(r)} />}
               <Button label="Skip" onPress={() => resolve(r.id, 'skip')} />
             </View>
+            {!!reportEdits[r.id]?.note && <Text style={styles.note}>{reportEdits[r.id]?.note}</Text>}
           </View>
         ))}
       </View>

@@ -20,6 +20,22 @@ import { db } from './firebase';
 import { Entry } from '../types';
 import { articlesService } from './articles';
 
+// Helper to safely normalize Firestore Timestamp | Date | string to ISO string
+const toIso = (value: any): string => {
+  try {
+    if (!value) return new Date().toISOString();
+    if (typeof value === 'string') return value;
+    if (value instanceof Date) return value.toISOString();
+    if (typeof value.toDate === 'function') {
+      const d = value.toDate();
+      return d instanceof Date ? d.toISOString() : new Date(d).toISOString();
+    }
+    return new Date(value).toISOString();
+  } catch {
+    return new Date().toISOString();
+  }
+};
+
 class EntriesService {
   private entriesCollection = collection(db, 'entries');
 
@@ -52,8 +68,8 @@ class EntriesService {
       return {
         id: docRef.id,
         ...data,
-        createdAt: data?.createdAt?.toDate()?.toISOString() || new Date().toISOString(),
-        updatedAt: data?.updatedAt?.toDate()?.toISOString() || new Date().toISOString(),
+        createdAt: toIso(data?.createdAt),
+        updatedAt: toIso(data?.updatedAt),
       } as Entry;
     } catch (error: any) {
       throw new Error(error.message || 'Failed to create entry');
@@ -174,11 +190,27 @@ class EntriesService {
         q = query(q, startAfter(lastDoc));
       }
 
-      const querySnapshot = await getDocs(q);
+      let querySnapshot;
+      try {
+        querySnapshot = await getDocs(q);
+      } catch (error) {
+        // Fallback if the composite index is missing at read time
+        try {
+          const fallback = query(
+            this.entriesCollection,
+            orderBy('createdAt', 'desc'),
+            limit(limitCount)
+          );
+          querySnapshot = await getDocs(fallback);
+        } catch {
+          const simple = query(this.entriesCollection, limit(limitCount));
+          querySnapshot = await getDocs(simple);
+        }
+      }
       const entries: Entry[] = [];
 
       querySnapshot.forEach((doc) => {
-        const data = doc.data();
+        const data: any = doc.data();
         entries.push({
           id: doc.id,
           ...data,
