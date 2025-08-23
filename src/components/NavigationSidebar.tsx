@@ -4,6 +4,7 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
+  Platform,
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
@@ -16,6 +17,16 @@ import {
   TagIcon,
   MenuIcon 
 } from './icons';
+
+const NAV_COLORS = {
+  background: '#0B0D12',
+  border: '#141A22',
+  blue: '#2F6FED',
+  blueHover: '#3B82F6',
+  white: '#FFFFFF',
+  whiteMuted: 'rgba(255,255,255,0.85)',
+  iconInactiveBg: 'rgba(255,255,255,0.06)',
+};
 
 export const NavigationSidebar: React.FC = () => {
   const dispatch = useDispatch();
@@ -31,7 +42,11 @@ export const NavigationSidebar: React.FC = () => {
   };
 
   return (
-    <View style={[styles.container, isNavigationExpanded && styles.expanded]}>
+    <View style={[
+      styles.container,
+      isNavigationExpanded && styles.expanded,
+      Platform.OS === 'web' && styles.webFixed,
+    ]}>
       {/* Logo / Brand */}
       <TouchableOpacity
         style={[styles.logoContainer, isNavigationExpanded && styles.logoContainerExpanded]}
@@ -51,10 +66,9 @@ export const NavigationSidebar: React.FC = () => {
           style={[styles.navItem, activeNavItem === 'latest' && styles.navItemActive]}
           onPress={() => handleNavItemPress('latest')}
         >
-          <HistoryIcon 
-            color={activeNavItem === 'latest' ? theme.colors.navTextActive : theme.colors.navText} 
-            size={20} 
-          />
+          <View style={[styles.iconWrapper, activeNavItem === 'latest' && styles.iconWrapperActive]}>
+            <HistoryIcon color={NAV_COLORS.white} size={20} />
+          </View>
           {isNavigationExpanded && (
             <Text style={[styles.navText, activeNavItem === 'latest' && styles.navTextActive]}>
               latest
@@ -66,10 +80,9 @@ export const NavigationSidebar: React.FC = () => {
           style={[styles.navItem, activeNavItem === 'popular' && styles.navItemActive]}
           onPress={() => handleNavItemPress('popular')}
         >
-          <CommentsIcon 
-            color={activeNavItem === 'popular' ? theme.colors.navTextActive : theme.colors.navText} 
-            size={20} 
-          />
+          <View style={[styles.iconWrapper, activeNavItem === 'popular' && styles.iconWrapperActive]}>
+            <CommentsIcon color={NAV_COLORS.white} size={20} />
+          </View>
           {isNavigationExpanded && (
             <Text style={[styles.navText, activeNavItem === 'popular' && styles.navTextActive]}>
               popular
@@ -82,10 +95,9 @@ export const NavigationSidebar: React.FC = () => {
             style={[styles.navItem, activeNavItem === 'following' && styles.navItemActive]}
             onPress={() => handleNavItemPress('following')}
           >
-            <UsersIcon 
-              color={activeNavItem === 'following' ? theme.colors.navTextActive : theme.colors.navText} 
-              size={20} 
-            />
+            <View style={[styles.iconWrapper, activeNavItem === 'following' && styles.iconWrapperActive]}>
+              <UsersIcon color={NAV_COLORS.white} size={20} />
+            </View>
             {isNavigationExpanded && (
               <Text style={[styles.navText, activeNavItem === 'following' && styles.navTextActive]}>
                 following
@@ -98,10 +110,9 @@ export const NavigationSidebar: React.FC = () => {
           style={[styles.navItem, activeNavItem === 'channels' && styles.navItemActive]}
           onPress={() => handleNavItemPress('channels')}
         >
-          <TagIcon 
-            color={activeNavItem === 'channels' ? theme.colors.navTextActive : theme.colors.navText} 
-            size={20} 
-          />
+          <View style={[styles.iconWrapper, activeNavItem === 'channels' && styles.iconWrapperActive]}>
+            <TagIcon color={NAV_COLORS.white} size={20} />
+          </View>
           {isNavigationExpanded && (
             <Text style={[styles.navText, activeNavItem === 'channels' && styles.navTextActive]}>
               channels
@@ -112,7 +123,7 @@ export const NavigationSidebar: React.FC = () => {
 
       {/* Expand Toggle */}
       <TouchableOpacity style={styles.expandButton} onPress={handleExpandToggle}>
-        <MenuIcon color={theme.colors.navText} size={16} />
+        <MenuIcon color={NAV_COLORS.white} size={16} />
       </TouchableOpacity>
     </View>
   );
@@ -120,19 +131,24 @@ export const NavigationSidebar: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    position: 'fixed',
+    position: 'absolute',
     left: 0,
     top: 0,
+    bottom: 0,
     width: theme.layout.navigationWidth,
-    height: '100vh',
-    backgroundColor: theme.colors.navBackground,
+    backgroundColor: NAV_COLORS.background,
     zIndex: theme.zIndex.navigation,
     paddingVertical: theme.spacing.xl,
     alignItems: 'center',
-    transition: `width ${theme.animations.normal} ${theme.animations.ease}`,
     overflow: 'hidden',
-    borderRight: `1px solid ${theme.colors.border}`,
-    backdropFilter: 'blur(10px)',
+    borderRightWidth: 1,
+    borderRightColor: NAV_COLORS.border,
+    ...theme.shadows.sm,
+  },
+  // Web-only: keep sidebar pinned to viewport
+  webFixed: {
+    // Type cast to bypass RN types that don't include 'fixed'
+    position: 'fixed' as any,
   },
   expanded: {
     width: theme.layout.navigationExpandedWidth,
@@ -142,7 +158,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     width: 45,
     height: 45,
-    backgroundImage: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.accent} 100%)`,
+    backgroundColor: NAV_COLORS.blue,
     borderRadius: theme.borderRadius.lg,
     justifyContent: 'center',
     alignItems: 'center',
@@ -150,7 +166,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     paddingHorizontal: theme.spacing.sm,
     ...theme.shadows.md,
-    transition: `all ${theme.animations.normal} ${theme.animations.ease}`,
   },
   logoContainerExpanded: {
     width: '90%',
@@ -159,12 +174,12 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.xl,
   },
   logoText: {
-    color: theme.colors.surface,
+    color: NAV_COLORS.white,
     fontSize: 22,
     fontWeight: theme.fonts.weights.black,
   },
   brandText: {
-    color: theme.colors.surface,
+    color: NAV_COLORS.white,
     fontSize: 18,
     fontWeight: theme.fonts.weights.bold,
     letterSpacing: -0.5,
@@ -189,36 +204,39 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.lg,
     position: 'relative',
     minHeight: 44,
-    transition: `all ${theme.animations.fast} ${theme.animations.ease}`,
-    cursor: 'pointer',
   },
   navItemActive: {
-    backgroundImage: `linear-gradient(135deg, ${theme.colors.primary}15 0%, ${theme.colors.accent}15 100%)`,
-    borderLeft: `3px solid ${theme.colors.primary}`,
-    marginLeft: -3,
+    backgroundColor: 'rgba(47, 111, 237, 0.14)',
+  },
+  iconWrapper: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: NAV_COLORS.iconInactiveBg,
+  },
+  iconWrapperActive: {
+    backgroundColor: NAV_COLORS.blue,
   },
   navText: {
-    color: theme.colors.navText,
+    color: NAV_COLORS.whiteMuted,
     fontSize: theme.fonts.sizes.md,
     marginLeft: theme.spacing.md,
     fontWeight: theme.fonts.weights.medium,
     flex: 1,
-    flexWrap: 'nowrap',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    transition: `color ${theme.animations.fast} ${theme.animations.ease}`,
   },
   navTextActive: {
-    color: theme.colors.navTextActive,
+    color: NAV_COLORS.white,
     fontWeight: theme.fonts.weights.semibold,
   },
   expandButton: {
     padding: theme.spacing.md,
     borderRadius: theme.borderRadius.lg,
-    backgroundColor: theme.colors.navHover,
+    backgroundColor: NAV_COLORS.iconInactiveBg,
+    borderWidth: 1,
+    borderColor: NAV_COLORS.border,
     marginTop: 'auto',
     marginBottom: theme.spacing.md,
-    transition: `all ${theme.animations.fast} ${theme.animations.ease}`,
   },
 });

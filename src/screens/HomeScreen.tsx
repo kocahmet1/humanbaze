@@ -1,9 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
+  Animated,
+  Easing,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 // Note: This app uses hash-based routing, not React Navigation
@@ -12,6 +14,7 @@ import { fetchFeedEntries } from '../store/slices/entriesSlice';
 import { fetchRecentArticles, fetchPopularArticles, fetchPopularArticlesLast24h } from '../store/slices/articlesSlice';
 import { fetchLeaderboard } from '../store/slices/usersSlice';
 import { theme } from '../styles/theme';
+import { HistoryIcon, CommentsIcon } from '../components/icons';
 
 // Import components
 import { NavigationSidebar } from '../components/NavigationSidebar';
@@ -30,6 +33,18 @@ export const HomeScreen: React.FC = () => {
   const { feedEntries, isLoading: entriesLoading } = useSelector((state: RootState) => state.entries);
   const { recentArticles, popularArticles24h, popularCounts24h } = useSelector((state: RootState) => state.articles);
   const { isMobile, isTablet, isNavigationExpanded, activeNavItem } = useSelector((state: RootState) => state.ui);
+
+  // Slide-in animation for card when switching left nav filters
+  const slideX = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    slideX.setValue(-12);
+    Animated.timing(slideX, {
+      toValue: 0,
+      duration: 250,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [activeNavItem, slideX]);
 
   useEffect(() => {
     // Fetch data on component mount
@@ -70,7 +85,12 @@ export const HomeScreen: React.FC = () => {
                   >
                     {article.title}
                   </Text>
-                  <View style={styles.countBadge}>
+                  <View
+                    style={[
+                      styles.countBadge,
+                      { backgroundColor: activeNavItem === 'popular' ? theme.colors.accent : theme.colors.primary },
+                    ]}
+                  >
                     <Text style={styles.countBadgeText}>
                       {activeNavItem === 'popular'
                         ? (popularCounts24h[article.id] ?? 0)
@@ -108,30 +128,47 @@ export const HomeScreen: React.FC = () => {
       <View style={[styles.mainContent, isNavigationExpanded && styles.mainContentExpanded]}>
         {/* Left column */}
           <View style={[styles.leftColumn, isTablet && styles.leftColumnTablet]}>
-            <View style={[styles.recentEntriesContainer, { marginTop: theme.spacing.sm }] }>
-              <Text style={styles.sectionTitle}>
-                {activeNavItem === 'popular' ? 'Popular (last 24h)' : 'Most Recent Entries'}
-              </Text>
-              <ScrollView style={styles.entriesList}>
-                {(activeNavItem === 'popular' ? popularArticles24h : recentArticles).map((article) => (
-                  <View key={article.id} style={styles.entryItem}>
-                    <Text
-                      style={styles.entryTitle}
-                      numberOfLines={2}
-                      onPress={() => (window.location.hash = `#/article/${encodeURIComponent(article.id)}`)}
-                    >
-                      {article.title}
-                    </Text>
-                    <View style={styles.countBadge}>
-                      <Text style={styles.countBadgeText}>
-                        {activeNavItem === 'popular'
-                          ? (popularCounts24h[article.id] ?? 0)
-                          : (article?.stats?.entries ?? 0)}
+            <View style={[styles.recentEntriesWrapper, { marginTop: theme.spacing.sm }]}>
+              <Animated.View
+                style={[
+                  styles.recentEntriesContainer,
+                  styles.recentEntriesFromNav,
+                  { transform: [{ translateX: slideX }] },
+                ]}
+              >
+                {/* Pointer notch with subtle glow */}
+                <View style={styles.pointerGlow} />
+                <View style={styles.pointer} />
+                <View style={styles.pointerBaseMask} />
+                <Text style={styles.sectionTitle}>
+                  {activeNavItem === 'popular' ? 'Popular (last 24h)' : 'Most Recent Entries'}
+                </Text>
+                <ScrollView style={styles.entriesList}>
+                  {(activeNavItem === 'popular' ? popularArticles24h : recentArticles).map((article) => (
+                    <View key={article.id} style={styles.entryItem}>
+                      <Text
+                        style={styles.entryTitle}
+                        numberOfLines={2}
+                        onPress={() => (window.location.hash = `#/article/${encodeURIComponent(article.id)}`)}
+                      >
+                        {article.title}
                       </Text>
+                      <View
+                        style={[
+                          styles.countBadge,
+                          { backgroundColor: activeNavItem === 'popular' ? theme.colors.accent : theme.colors.primary },
+                        ]}
+                      >
+                        <Text style={styles.countBadgeText}>
+                          {activeNavItem === 'popular'
+                            ? (popularCounts24h[article.id] ?? 0)
+                            : (article?.stats?.entries ?? 0)}
+                        </Text>
+                      </View>
                     </View>
-                  </View>
-                ))}
-              </ScrollView>
+                  ))}
+                </ScrollView>
+              </Animated.View>
             </View>
           </View>
 
@@ -168,7 +205,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
-    minHeight: '100vh',
   },
   mobileContainer: {
     flex: 1,
@@ -188,46 +224,149 @@ const styles = StyleSheet.create({
     paddingRight: theme.spacing.xxxl,
     paddingTop: theme.spacing.xxxl,
     maxWidth: 1600,
-    transition: `margin-left ${theme.animations.normal} ${theme.animations.ease}`,
   },
   mainContentExpanded: {
     marginLeft: theme.layout.navigationExpandedWidth + theme.spacing.xxxl,
   },
   leftColumn: {
-    width: theme.layout.leftColumnWidth,
+    flex: 21,
     paddingRight: theme.spacing.xl,
   },
   leftColumnTablet: {
     display: 'none', // Hide on tablet
   },
   centerColumn: {
-    width: theme.layout.centerColumnWidth,
+    flex: 58,
     paddingHorizontal: theme.spacing.xl,
   },
   centerColumnTablet: {
-    width: theme.layout.tabletCenterWidth,
+    flex: 73,
   },
   rightColumn: {
-    width: theme.layout.rightColumnWidth,
+    flex: 21,
     paddingLeft: theme.spacing.xl,
     paddingTop: 0,
   },
+  recentEntriesWrapper: {
+    position: 'relative',
+    // Bring the card very close to the nav so the notch nearly touches
+    paddingLeft: 2,
+  },
   recentEntriesContainer: {
     backgroundColor: theme.colors.cardBackground,
-    borderRadius: theme.borderRadius.xl,
+    borderRadius: theme.borderRadius.xxl,
     padding: theme.spacing.xl,
-    ...theme.shadows.md,
-    backdropFilter: 'blur(20px)',
-    border: `1px solid ${theme.colors.borderLight}`,
+    ...theme.shadows.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
+  },
+  // Visual connection to the left navigation
+  recentEntriesFromNav: {
+    transform: [{ translateX: -8 }],
+    opacity: 0.98,
+  },
+  recentEntriesFromNavActive: {
+    transform: [{ translateX: 0 }],
+    opacity: 1,
+  },
+  navAnchor: {
+    position: 'absolute',
+    left: -18,
+    top: 10,
+    width: 28,
+    height: 28,
+    borderRadius: theme.borderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: theme.colors.surface,
+    zIndex: 2,
+    ...theme.shadows.sm,
+  },
+  navAnchorConnector: {
+    position: 'absolute',
+    // small rounded tab connecting the anchor to the card edge
+    left: 10,
+    top: 20,
+    width: 12,
+    height: 10,
+    borderTopRightRadius: 6,
+    borderBottomRightRadius: 6,
+    zIndex: 1,
+  },
+  navAnchorLatest: {
+    backgroundColor: theme.colors.primary,
+  },
+  navAnchorPopular: {
+    backgroundColor: theme.colors.accent,
   },
   sectionTitle: {
     fontSize: theme.fonts.sizes.lg,
-    fontWeight: theme.fonts.weights.bold,
-    backgroundImage: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.accent} 100%)`,
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
+    fontWeight: '700',
+    color: theme.colors.text,
     marginBottom: theme.spacing.lg,
     textAlign: 'left',
+  },
+  // Speech-bubble notch connecting the card to the sidebar (triangular)
+  pointerBorder: {
+    position: 'absolute',
+    width: 0,
+    height: 0,
+    left: -20,
+    top: 54,
+    borderTopWidth: 16,
+    borderBottomWidth: 16,
+    borderRightWidth: 20,
+    borderTopColor: 'transparent',
+    borderBottomColor: 'transparent',
+    borderRightColor: theme.colors.borderLight,
+  },
+  pointer: {
+    position: 'absolute',
+    width: 0,
+    height: 0,
+    left: -19,
+    top: 55,
+    borderTopWidth: 15,
+    borderBottomWidth: 15,
+    borderRightWidth: 19,
+    borderTopColor: 'transparent',
+    borderBottomColor: 'transparent',
+    borderRightColor: theme.colors.cardBackground,
+  },
+  // Soft halo behind the pointer to mimic the card shadow continuation
+  pointerGlow: {
+    position: 'absolute',
+    width: 0,
+    height: 0,
+    left: -22,
+    top: 53,
+    borderTopWidth: 18,
+    borderBottomWidth: 18,
+    borderRightWidth: 22,
+    borderTopColor: 'transparent',
+    borderBottomColor: 'transparent',
+    // Subtle colored glow to match the UI primary blue
+    borderRightColor: 'rgba(47, 111, 237, 0.18)',
+  },
+  // Covers the card's left border where the triangle joins so it feels seamless
+  pointerBaseMask: {
+    position: 'absolute',
+    left: -1,
+    top: 54,
+    width: 3,
+    height: 34,
+    backgroundColor: theme.colors.cardBackground,
+    zIndex: 3,
+  },
+  leftEdge: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 6,
+    borderTopLeftRadius: theme.borderRadius.xl,
+    borderBottomLeftRadius: theme.borderRadius.xl,
   },
   entriesList: {
     maxHeight: 360,
@@ -242,11 +381,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.sm,
     borderRadius: theme.borderRadius.lg,
     marginBottom: theme.spacing.xs,
-    transition: `all ${theme.animations.fast} ${theme.animations.ease}`,
-    cursor: 'pointer',
-    '&:hover': {
-      backgroundColor: theme.colors.overlay,
-    },
   },
   entryNumber: {
     width: 24,
@@ -264,20 +398,16 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.sm,
     color: theme.colors.textSecondary,
     lineHeight: 20,
-    fontWeight: theme.fonts.weights.medium,
-    transition: `color ${theme.animations.fast} ${theme.animations.ease}`,
+    fontWeight: '500',
     flexShrink: 1,
     overflow: 'hidden',
     minWidth: 0,
-    '&:hover': {
-      color: theme.colors.primary,
-    },
   },
   countBadge: {
     minWidth: 32,
     height: 26,
     paddingHorizontal: 10,
-    backgroundImage: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.accent} 100%)`,
+    backgroundColor: theme.colors.primary,
     borderRadius: theme.borderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
@@ -287,7 +417,7 @@ const styles = StyleSheet.create({
   countBadgeText: {
     color: theme.colors.surface,
     fontSize: theme.fonts.sizes.xs,
-    fontWeight: theme.fonts.weights.semibold,
+    fontWeight: '600',
   },
   mobileLoginContainer: {
     marginBottom: theme.spacing.lg,

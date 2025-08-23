@@ -84,7 +84,7 @@ export const ArticleDetailScreen: React.FC<{ articleId: string }> = ({ articleId
             <Text style={styles.sectionTitleCenter}>{activeNavItem === 'popular' ? 'Popular (last 24h)' : 'Most Recent Entries'}</Text>
             <ScrollView style={styles.entriesList}>
               {(activeNavItem === 'popular' ? popularArticles24h : recentArticles).map((article: Article) => (
-                <View key={article.id} style={styles.entryItemMini}>
+                <View key={article.id} style={styles.recentEntryItem}>
                   <Text
                     style={styles.entryTitle}
                     numberOfLines={2}
@@ -198,14 +198,64 @@ const styles = StyleSheet.create({
   rightColumn: { width: (theme as any).layout?.rightColumnWidth || 280, paddingLeft: theme.spacing.md, paddingTop: theme.spacing.sm },
   logoContainer: { alignItems: 'center', marginTop: theme.spacing.xxxl, marginBottom: theme.spacing.md },
   logo: { fontSize: 24, fontWeight: theme.fonts.weights.bold as any, color: theme.colors.primary, fontFamily: theme.fonts.regular },
-  recentEntriesContainer: { backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.sm, padding: theme.spacing.sm, ...theme.shadows.sm },
+  recentEntriesContainer: {
+    backgroundColor: theme.colors.cardBackground,
+    borderRadius: theme.borderRadius.xl,
+    padding: theme.spacing.xl,
+    ...theme.shadows.md,
+    backdropFilter: 'blur(20px)',
+    border: `1px solid ${theme.colors.borderLight}`,
+  },
   entriesList: { maxHeight: 360 },
-  sectionTitleCenter: { fontSize: theme.fonts.sizes.md, fontWeight: theme.fonts.weights.semibold as any, color: theme.colors.primary, marginBottom: theme.spacing.md, textAlign: 'center' },
-  entryItemMini: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: theme.spacing.sm, borderBottomWidth: 1, borderBottomColor: theme.colors.borderLight },
+  sectionTitleCenter: {
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.bold as any,
+    backgroundImage: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.accent} 100%)`,
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    marginBottom: theme.spacing.lg,
+    textAlign: 'left',
+  },
+  recentEntryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.sm,
+    borderRadius: theme.borderRadius.lg,
+    marginBottom: theme.spacing.xs,
+    transition: `all ${theme.animations.fast} ${theme.animations.ease}`,
+    cursor: 'pointer',
+    '&:hover': {
+      backgroundColor: theme.colors.overlay,
+    },
+  },
   entryNumber: { width: 24, height: 24, backgroundColor: theme.colors.overlay, borderRadius: theme.borderRadius.full, textAlign: 'center', lineHeight: 24 as any, fontSize: theme.fonts.sizes.xs, color: theme.colors.text, marginRight: theme.spacing.sm },
-  entryTitle: { flex: 1, fontSize: theme.fonts.sizes.sm, color: theme.colors.primary, lineHeight: 18 },
-  countBadge: { minWidth: 28, height: 24, paddingHorizontal: 8, backgroundColor: theme.colors.overlay, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginLeft: theme.spacing.sm },
-  countBadgeText: { color: theme.colors.textSecondary, fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold as any },
+  entryTitle: {
+    flex: 1,
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.textSecondary,
+    lineHeight: 20,
+    fontWeight: theme.fonts.weights.medium as any,
+    transition: `color ${theme.animations.fast} ${theme.animations.ease}`,
+    flexShrink: 1,
+    overflow: 'hidden',
+    minWidth: 0,
+    '&:hover': {
+      color: theme.colors.primary,
+    },
+  },
+  countBadge: {
+    minWidth: 32,
+    height: 26,
+    paddingHorizontal: 10,
+    backgroundImage: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.accent} 100%)`,
+    borderRadius: theme.borderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: theme.spacing.sm,
+    ...theme.shadows.sm,
+  },
+  countBadgeText: { color: theme.colors.surface, fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold as any },
   
   // New header styles
   pageHeader: {
