@@ -24,16 +24,18 @@ import { NavigationSidebar } from '../components/NavigationSidebar';
 import { SearchBar } from '../components/SearchBar';
 import { LoginWidget } from '../components/LoginWidget';
 import { Leaderboard } from '../components/Leaderboard';
+import { navigate, homePath, articlePathBySlug } from '../utils/navigation';
 
 interface ProfileEntry extends Entry {
   article?: Article;
 }
 
 export interface UserProfileScreenProps {
-  userId: string;
+  userId?: string;
+  userSlug?: string;
 }
 
-const UserProfileScreen = ({ userId }: UserProfileScreenProps) => {
+const UserProfileScreen = ({ userId, userSlug }: UserProfileScreenProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const { user: currentUser } = useSelector((state: RootState) => state.auth);
   const { isMobile, isTablet } = useSelector((state: RootState) => state.ui) as any;
@@ -46,23 +48,27 @@ const UserProfileScreen = ({ userId }: UserProfileScreenProps) => {
   const [refreshing, setRefreshing] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
 
-  const isOwnProfile = currentUser?.id === userId;
+  const isOwnProfile = currentUser?.id && (userId ? currentUser.id === userId : false);
 
   useEffect(() => {
     loadUserProfile();
     // Fetch recent articles for the left sidebar
     dispatch(fetchRecentArticles(10));
-  }, [userId, dispatch]);
+  }, [userId, userSlug, dispatch]);
 
   const loadUserProfile = async () => {
     setIsLoading(true);
     try {
       // Load user data
-      const user = await usersService.getUserById(userId);
+      let user: User;
+      if (userId) user = await usersService.getUserById(userId);
+      else if (userSlug) user = await usersService.getUserBySlug(userSlug);
+      else if (currentUser) user = await usersService.getUserById(currentUser.id);
+      else throw new Error('No user specified');
       setProfileUser(user);
       
       // Load user entries
-      const entries = await entriesService.getEntriesByUser(userId, 20);
+      const entries = await entriesService.getEntriesByUser(user.id, 20);
       
       // Load articles for entries to show titles
       const entriesWithArticles = await Promise.all(
@@ -79,7 +85,7 @@ const UserProfileScreen = ({ userId }: UserProfileScreenProps) => {
       setUserEntries(entriesWithArticles);
       
       // Get most liked entry
-      const mostLikedEntries = await entriesService.getMostLikedEntriesByUser(userId, 1);
+      const mostLikedEntries = await entriesService.getMostLikedEntriesByUser(user.id, 1);
       if (mostLikedEntries.length > 0) {
         try {
           const article = await articlesService.getArticleById(mostLikedEntries[0].articleId);
@@ -91,7 +97,7 @@ const UserProfileScreen = ({ userId }: UserProfileScreenProps) => {
       
       // Check if following (for other users)
       if (!isOwnProfile && currentUser) {
-        const following = await usersService.isFollowing(currentUser.id, userId);
+        const following = await usersService.isFollowing(currentUser.id, user.id);
         setIsFollowing(following);
       }
       
@@ -288,7 +294,7 @@ const UserProfileScreen = ({ userId }: UserProfileScreenProps) => {
         {/* Left column */}
         <View style={[styles.leftColumn, isTablet && styles.leftColumnTablet]}>
           <View style={styles.logoContainer}>
-            <Text style={styles.logo} onPress={() => (window.location.hash = '#/')}>infopadd</Text>
+            <Text style={styles.logo} onPress={() => navigate(homePath)}>infopadd</Text>
           </View>
           
           <View style={styles.recentEntriesContainer}>
@@ -299,7 +305,7 @@ const UserProfileScreen = ({ userId }: UserProfileScreenProps) => {
                   <Text
                     style={styles.entryTitle}
                     numberOfLines={2}
-                    onPress={() => (window.location.hash = `#/article/${encodeURIComponent(article.id)}`)}
+                    onPress={() => navigate(articlePathBySlug(article.slug))}
                   >
                     {article.title}
                   </Text>

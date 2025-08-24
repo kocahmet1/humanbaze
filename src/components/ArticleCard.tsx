@@ -14,6 +14,7 @@ import { usersService } from '../services/users';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
 import { likeEntry, removeLikeDislike } from '../store/slices/entriesSlice';
+import { navigate, articlePathBySlug } from '../utils/navigation';
 
 interface ArticleCardProps {
   entry: Entry;
@@ -155,7 +156,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ entry, onPress }) => {
           <Text style={styles.metaPrefix}>in article</Text>
           {!isMobile && (
             <TouchableOpacity
-              onPress={() => (window.location.hash = `#/article/${encodeURIComponent(entry.articleId)}`)}
+              onPress={() => article?.slug && navigate(articlePathBySlug(article.slug))}
               style={styles.articleTitleWrapper}
             >
               <Text style={styles.articleTitle}>
@@ -182,7 +183,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ entry, onPress }) => {
       {/* Mobile: Title below meta row with ellipsis */}
       {isMobile && (
         <TouchableOpacity
-          onPress={() => (window.location.hash = `#/article/${encodeURIComponent(entry.articleId)}`)}
+          onPress={() => article?.slug && navigate(articlePathBySlug(article.slug))}
           style={styles.mobileTitleWrapper}
         >
           <Text style={styles.mobileArticleTitle} numberOfLines={2} ellipsizeMode="tail">
@@ -207,7 +208,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ entry, onPress }) => {
 
         <View style={styles.footerRightActions}>
           <TouchableOpacity
-            onPress={() => (window.location.hash = `#/article/${encodeURIComponent(entry.articleId)}`)}
+            onPress={() => article?.slug && navigate(articlePathBySlug(article.slug))}
             style={styles.readMoreButton}
           >
             <Text style={styles.readMoreText}>Read More</Text>

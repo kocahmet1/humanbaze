@@ -47,6 +47,55 @@ class UsersService {
     }
   }
 
+  // Get user by slug
+  async getUserBySlug(slug: string): Promise<User> {
+    try {
+      const qRef = query(this.usersCollection, where('slug', '==', slug), limit(1));
+      const snapshot = await getDocs(qRef);
+      if (snapshot.empty) {
+        throw new Error('User not found');
+      }
+      const docSnap = snapshot.docs[0];
+      const data: any = docSnap.data();
+      return {
+        id: docSnap.id,
+        ...data,
+        createdAt: data?.createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+        lastActive: data?.lastActive?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+      } as User;
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to fetch user by slug');
+    }
+  }
+
+  private createSlug(name: string): string {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9 -]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+  }
+
+  // Ensures a user has a unique slug; updates doc if missing
+  async ensureUserSlug(userId: string, displayName: string): Promise<string> {
+    const base = this.createSlug(displayName || 'user');
+    let candidate = base || `user-${userId.slice(0,6)}`;
+    // Check availability
+    const exists = async (slug: string) => {
+      const snap = await getDocs(query(this.usersCollection, where('slug', '==', slug), limit(1)));
+      return !snap.empty;
+    };
+    let suffix = 0;
+    let finalSlug = candidate;
+    while (await exists(finalSlug)) {
+      suffix += 1;
+      finalSlug = `${candidate}-${suffix}`;
+    }
+    await updateDoc(doc(db, 'users', userId), { slug: finalSlug, lastActive: serverTimestamp() });
+    return finalSlug;
+  }
+
   // Get leaderboard
   // Note: This now returns different datasets based on mode:
   // - 'recent_creators': last 10 unique users who created entries most recently
@@ -339,13 +388,16 @@ class UsersService {
   // Update user profile
   async updateUserProfile(userId: string, updates: Partial<User>): Promise<User> {
     try {
-      const docRef = doc(db, 'users', userId);
-      
-      await updateDoc(docRef, {
-        ...updates,
-        lastActive: serverTimestamp(),
-      });
-
+      const userRef = doc(db, 'users', userId);
+      // If displayName is being set and slug missing, set slug (do not overwrite existing slug)
+      if (updates.displayName) {
+        const current = await getDoc(userRef);
+        const data: any = current.data();
+        if (!data?.slug) {
+          await this.ensureUserSlug(userId, updates.displayName);
+        }
+      }
+      await updateDoc(userRef, { ...updates, lastActive: serverTimestamp() });
       return await this.getUserById(userId);
     } catch (error: any) {
       throw new Error(error.message || 'Failed to update profile');

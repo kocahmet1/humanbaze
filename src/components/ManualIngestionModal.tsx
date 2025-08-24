@@ -73,7 +73,7 @@ export const ManualIngestionModal: React.FC<Props> = ({ visible, onClose }) => {
       dispatch(fetchFeedEntries({ limit: 20 }));
       if (res.articleIds && res.articleIds.length > 0) {
         // Navigate to the first created article so you can verify immediately
-        try { window.location.hash = `#/article/${encodeURIComponent(res.articleIds[0])}`; } catch {}
+        try { window.history.pushState(null, '', `/article/id/${encodeURIComponent(res.articleIds[0])}`); window.dispatchEvent(new PopStateEvent('popstate')); } catch {}
       }
       onClose();
     } catch (e: any) {

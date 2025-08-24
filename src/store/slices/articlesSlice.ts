@@ -43,6 +43,13 @@ export const fetchArticleById = createAsyncThunk(
   }
 );
 
+export const fetchArticleBySlug = createAsyncThunk(
+  'articles/fetchArticleBySlug',
+  async (slug: string) => {
+    return await articlesService.getArticleBySlug(slug);
+  }
+);
+
 export const fetchRecentArticles = createAsyncThunk(
   'articles/fetchRecentArticles',
   async (limit: number = 10) => {
@@ -172,6 +179,21 @@ const articlesSlice = createSlice({
         state.currentArticle = action.payload;
       })
       .addCase(fetchArticleById.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.error.message || 'Failed to fetch article';
+      });
+
+    // Fetch article by Slug
+    builder
+      .addCase(fetchArticleBySlug.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchArticleBySlug.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.currentArticle = action.payload;
+      })
+      .addCase(fetchArticleBySlug.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.error.message || 'Failed to fetch article';
       });

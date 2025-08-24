@@ -3,6 +3,7 @@ export interface User {
   id: string;
   email: string;
   displayName: string;
+  slug?: string;
   photoURL?: string;
   bio?: string;
   role?: 'user' | 'admin' | 'import_bot' | 'bot';

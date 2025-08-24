@@ -26,6 +26,7 @@ import { NavigationSidebar } from '../components/NavigationSidebar';
 import { SearchBar } from '../components/SearchBar';
 import { LoginWidget } from '../components/LoginWidget';
 import { Leaderboard } from '../components/Leaderboard';
+import { navigate, articlePathBySlug } from '../utils/navigation';
 
 interface ProfileStats {
   entries: number;
@@ -338,7 +339,7 @@ export const ProfileScreen: React.FC = () => {
                   <Text
                     style={styles.entryTitle}
                     numberOfLines={2}
-                    onPress={() => (window.location.hash = `#/article/${encodeURIComponent(article.id)}`)}
+                    onPress={() => navigate(articlePathBySlug(article.slug))}
                   >
                     {article.title}
                   </Text>

@@ -12,6 +12,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../../store';
 import { registerWithEmail, loginWithGoogle, clearError } from '../../store/slices/authSlice';
 import { theme } from '../../styles/theme';
+import { navigate, homePath } from '../../utils/navigation';
 
 export const RegisterScreen: React.FC = () => {
   const [displayName, setDisplayName] = useState('');
@@ -69,13 +70,13 @@ export const RegisterScreen: React.FC = () => {
 
   const navigateToLogin = () => {
     dispatch(clearError());
-    window.location.hash = '#/login';
+    navigate('/login');
   };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.logoContainer}>
-        <Text style={styles.logo} onPress={() => (window.location.hash = '#/')}>infopadd</Text>
+        <Text style={styles.logo} onPress={() => navigate(homePath)}>infopadd</Text>
         <Text style={styles.tagline}>Join the Social Wikipedia</Text>
       </View>
 

@@ -78,6 +78,31 @@ class ArticlesService {
     }
   }
 
+  // Get article by slug
+  async getArticleBySlug(slug: string): Promise<Article> {
+    try {
+      const qRef = query(this.articlesCollection, where('slug', '==', slug), limit(1));
+      const snapshot = await getDocs(qRef);
+      if (snapshot.empty) {
+        throw new Error('Article not found');
+      }
+      const docSnap = snapshot.docs[0];
+      // Increment view count (best-effort)
+      try {
+        await updateDoc(docSnap.ref, { 'stats.views': increment(1) });
+      } catch {}
+      const data: any = docSnap.data();
+      return {
+        id: docSnap.id,
+        ...data,
+        createdAt: data?.createdAt?.toDate()?.toISOString() || new Date().toISOString(),
+        lastUpdated: data?.lastUpdated?.toDate()?.toISOString() || new Date().toISOString(),
+      } as Article;
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to fetch article by slug');
+    }
+  }
+
   // Get articles with pagination
   async getArticles({ 
     limit: limitCount = 20, 

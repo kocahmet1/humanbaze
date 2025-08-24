@@ -17,6 +17,7 @@ import {
   TagIcon,
   MenuIcon 
 } from './icons';
+import { navigate, homePath } from '../utils/navigation';
 
 const NAV_COLORS = {
   background: '#0B0D12',
@@ -50,7 +51,7 @@ export const NavigationSidebar: React.FC = () => {
       {/* Logo / Brand */}
       <TouchableOpacity
         style={[styles.logoContainer, isNavigationExpanded && styles.logoContainerExpanded]}
-        onPress={() => (window.location.hash = '#/')}
+        onPress={() => navigate(homePath)}
         accessibilityRole="link"
       >
         {isNavigationExpanded ? (

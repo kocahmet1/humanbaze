@@ -6,6 +6,7 @@ import { RootState } from '../store';
 import { authService } from '../services/auth';
 import { usersService } from '../services/users';
 import { setUser } from '../store/slices/authSlice';
+import { navigate, homePath } from '../utils/navigation';
 
 export const SettingsScreen: React.FC = () => {
   const dispatch = useDispatch();
@@ -109,7 +110,7 @@ export const SettingsScreen: React.FC = () => {
       setLoadingSection('delete');
       await authService.deleteAccount(pw);
       alert('Account deleted. You will be signed out.');
-      window.location.hash = '#/';
+      navigate(homePath);
     } catch (e: any) {
       alert(e.message || 'Failed to delete account');
     } finally {

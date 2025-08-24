@@ -6,7 +6,7 @@ import { useDispatch, useSelector, TypedUseSelectorHook } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
 
 import { Article } from '../types';
-import { fetchArticleById } from '../store/slices/articlesSlice';
+import { fetchArticleById, fetchArticleBySlug } from '../store/slices/articlesSlice';
 import { fetchEntriesByArticleId } from '../store/slices/entriesSlice';
 import { ArticleHeader } from '../components/article/ArticleHeader';
 import { MediaCarousel } from '../components/article/MediaCarousel';
@@ -18,10 +18,12 @@ import { LoginWidget } from '../components/LoginWidget';
 import { Leaderboard } from '../components/Leaderboard';
 import { fetchRecentArticles, fetchPopularArticlesLast24h } from '../store/slices/articlesSlice';
 import { SearchResults } from '../components/SearchResults';
+import { navigate, articlePathBySlug, profilePathBySlug, profilePathById } from '../utils/navigation';
+import { usersService } from '../services/users';
 
 const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
 
-export const ArticleDetailScreen: React.FC<{ articleId: string }> = ({ articleId }) => {
+export const ArticleDetailScreen: React.FC<{ articleId?: string; articleSlug?: string }> = ({ articleId, articleSlug }) => {
   const dispatch = useDispatch<AppDispatch>();
   const articlesState = useAppSelector((state) => state.articles);
   const entriesState = useAppSelector((state) => state.entries);
@@ -34,7 +36,10 @@ export const ArticleDetailScreen: React.FC<{ articleId: string }> = ({ articleId
   const { isMobile, isTablet, isNavigationExpanded, activeNavItem } = uiState as any;
 
   useEffect(() => {
-    if (articleId) {
+    if (articleSlug) {
+      // Load by slug then entries by the resolved id once available
+      dispatch(fetchArticleBySlug(articleSlug));
+    } else if (articleId) {
       dispatch(fetchArticleById(articleId));
       dispatch(fetchEntriesByArticleId({ articleId, limit: 20 }));
     }
@@ -42,9 +47,21 @@ export const ArticleDetailScreen: React.FC<{ articleId: string }> = ({ articleId
     dispatch(fetchPopularArticlesLast24h(10));
   }, [dispatch, articleId]);
 
-  const handleUserPress = (userId: string) => {
-    // Navigate using hash-based routing
-    window.location.hash = `#/profile/${userId}`;
+  // When loading by slug, wait for currentArticle.id to fetch entries
+  useEffect(() => {
+    if (articleSlug && currentArticle?.id) {
+      dispatch(fetchEntriesByArticleId({ articleId: currentArticle.id, limit: 20 }));
+    }
+  }, [dispatch, articleSlug, currentArticle?.id]);
+
+  const handleUserPress = async (userId: string) => {
+    try {
+      const user = await usersService.getUserById(userId);
+      const slug = user.slug || await usersService.ensureUserSlug(user.id, user.displayName || 'user');
+      navigate(slug ? profilePathBySlug(slug) : profilePathById(userId));
+    } catch {
+      navigate(profilePathById(userId));
+    }
   };
   if (isMobile) {
     return (
@@ -88,7 +105,7 @@ export const ArticleDetailScreen: React.FC<{ articleId: string }> = ({ articleId
                   <Text
                     style={styles.entryTitle}
                     numberOfLines={2}
-                    onPress={() => (window.location.hash = `#/article/${encodeURIComponent(article.id)}`)}
+                    onPress={() => navigate(articlePathBySlug(article.slug))}
                   >
                     {article.title}
                   </Text>

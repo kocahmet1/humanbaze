@@ -10,6 +10,7 @@ import { AppDispatch, RootState } from '../store';
 import { logout } from '../store/slices/authSlice';
 import { openModal } from '../store/slices/uiSlice';
 import { theme } from '../styles/theme';
+import { navigate, settingsPath, adminPath } from '../utils/navigation';
 
 export const LoginWidget: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -24,8 +25,7 @@ export const LoginWidget: React.FC = () => {
   };
 
   const handleOpenSettings = () => {
-    // Use hash navigation for web like Admin button below
-    window.location.hash = '#/settings';
+    navigate(settingsPath);
   };
 
   // If not logged in, render a compact sign-in card (used in the right sidebar)
@@ -95,7 +95,7 @@ export const LoginWidget: React.FC = () => {
           {user.email?.toLowerCase() === 'ahmetkoc1@gmail.com' && (
             <TouchableOpacity
               style={styles.actionButton}
-              onPress={() => (window.location.hash = '#/admin')}
+              onPress={() => navigate(adminPath)}
             >
               <Text style={styles.actionButtonText}>Admin</Text>
             </TouchableOpacity>

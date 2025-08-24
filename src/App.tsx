@@ -56,40 +56,50 @@ const App: React.FC = () => {
     return unsubscribe;
   }, []);
   const [route, setRoute] = useState<
-    | { name: 'home' } 
-    | { name: 'article'; articleId: string }
+    | { name: 'home' }
+    | { name: 'article'; articleSlug: string }
+    | { name: 'articleById'; articleId: string }
     | { name: 'profile' }
     | { name: 'userProfile'; userId: string }
+    | { name: 'userProfileBySlug'; userSlug: string }
     | { name: 'admin' }
     | { name: 'settings' }
   >(() => {
-    const hash = window.location.hash || '';
-    const articleMatch = hash.match(/#\/article\/(.+)$/);
-    const profileMatch = hash.match(/#\/profile\/(.+)$/);
-    
-    if (articleMatch) return { name: 'article', articleId: decodeURIComponent(articleMatch[1]) };
-    if (profileMatch) return { name: 'userProfile', userId: decodeURIComponent(profileMatch[1]) };
-    if (hash === '#/profile') return { name: 'profile' };
-    if (hash === '#/admin') return { name: 'admin' };
-    if (hash === '#/settings') return { name: 'settings' };
+    const path = window.location.pathname || '/';
+    const articleByIdMatch = path.match(/^\/article\/id\/(.+)$/);
+    const articleSlugMatch = path.match(/^\/article\/([^/]+)$/);
+    const profileUserMatch = path.match(/^\/profile\/(.+)$/);
+    const profileSlugMatch = path.match(/^\/u\/([^/]+)$/);
+
+    if (articleByIdMatch) return { name: 'articleById', articleId: decodeURIComponent(articleByIdMatch[1]) };
+    if (articleSlugMatch) return { name: 'article', articleSlug: decodeURIComponent(articleSlugMatch[1]) };
+    if (profileSlugMatch) return { name: 'userProfileBySlug', userSlug: decodeURIComponent(profileSlugMatch[1]) };
+    if (profileUserMatch) return { name: 'userProfile', userId: decodeURIComponent(profileUserMatch[1]) };
+    if (path === '/profile') return { name: 'profile' };
+    if (path === '/admin') return { name: 'admin' };
+    if (path === '/settings') return { name: 'settings' };
     return { name: 'home' };
   });
 
   useEffect(() => {
     const handler = () => {
-      const hash = window.location.hash || '';
-      const articleMatch = hash.match(/#\/article\/(.+)$/);
-      const profileMatch = hash.match(/#\/profile\/(.+)$/);
-      
-      if (articleMatch) setRoute({ name: 'article', articleId: decodeURIComponent(articleMatch[1]) });
-      else if (profileMatch) setRoute({ name: 'userProfile', userId: decodeURIComponent(profileMatch[1]) });
-      else if (hash === '#/profile') setRoute({ name: 'profile' });
-      else if (hash === '#/admin') setRoute({ name: 'admin' });
-      else if (hash === '#/settings') setRoute({ name: 'settings' });
+      const path = window.location.pathname || '/';
+      const articleByIdMatch = path.match(/^\/article\/id\/(.+)$/);
+      const articleSlugMatch = path.match(/^\/article\/([^/]+)$/);
+      const profileUserMatch = path.match(/^\/profile\/(.+)$/);
+      const profileSlugMatch = path.match(/^\/u\/([^/]+)$/);
+
+      if (articleByIdMatch) setRoute({ name: 'articleById', articleId: decodeURIComponent(articleByIdMatch[1]) });
+      else if (articleSlugMatch) setRoute({ name: 'article', articleSlug: decodeURIComponent(articleSlugMatch[1]) });
+      else if (profileSlugMatch) setRoute({ name: 'userProfileBySlug', userSlug: decodeURIComponent(profileSlugMatch[1]) });
+      else if (profileUserMatch) setRoute({ name: 'userProfile', userId: decodeURIComponent(profileUserMatch[1]) });
+      else if (path === '/profile') setRoute({ name: 'profile' });
+      else if (path === '/admin') setRoute({ name: 'admin' });
+      else if (path === '/settings') setRoute({ name: 'settings' });
       else setRoute({ name: 'home' });
     };
-    window.addEventListener('hashchange', handler);
-    return () => window.removeEventListener('hashchange', handler);
+    window.addEventListener('popstate', handler);
+    return () => window.removeEventListener('popstate', handler);
   }, []);
 
   return (
@@ -103,11 +113,15 @@ const App: React.FC = () => {
         {route.name === 'home' ? (
           <HomeScreen />
         ) : route.name === 'article' ? (
+          <ArticleDetailScreen articleSlug={route.articleSlug} />
+        ) : route.name === 'articleById' ? (
           <ArticleDetailScreen articleId={route.articleId} />
         ) : route.name === 'profile' ? (
           <ProfileScreen />
         ) : route.name === 'userProfile' ? (
           React.createElement(UserProfileScreen, { userId: route.userId })
+        ) : route.name === 'userProfileBySlug' ? (
+          React.createElement(UserProfileScreen, { userSlug: route.userSlug } as any)
         ) : route.name === 'admin' ? (
           <AdminScreen />
         ) : route.name === 'settings' ? (

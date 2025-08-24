@@ -6,6 +6,7 @@ import { searchArticles } from '../store/slices/articlesSlice';
 import { searchUsers } from '../store/slices/usersSlice';
 import { setSearchResultsVisible } from '../store/slices/uiSlice';
 import { theme } from '../styles/theme';
+import { navigate, articlePathBySlug, profilePathBySlug, profilePathById } from '../utils/navigation';
 
 // Debounce helper to avoid firing search on every keystroke immediately
 const useDebouncedValue = (value: string, delayMs: number) => {
@@ -61,7 +62,7 @@ export const SearchResults: React.FC = () => {
                   style={styles.item}
                   onPress={() => {
                     dispatch(setSearchResultsVisible(false));
-                    window.location.hash = `#/article/${encodeURIComponent(a.id)}`;
+                    navigate(articlePathBySlug(a.slug));
                   }}
                 >
                   <Text numberOfLines={2} style={styles.itemTitle}>{a.title}</Text>
@@ -78,9 +79,17 @@ export const SearchResults: React.FC = () => {
                 <TouchableOpacity
                   key={u.id}
                   style={styles.item}
-                  onPress={() => {
+                  onPress={async () => {
                     dispatch(setSearchResultsVisible(false));
-                    window.location.hash = `#/profile/${u.id}`;
+                    let slug = u.slug;
+                    if (!slug) {
+                      try {
+                        const mod = await import('../services/users');
+                        // @ts-ignore dynamic import type
+                        slug = await mod.usersService.ensureUserSlug(u.id, u.displayName || 'user');
+                      } catch {}
+                    }
+                    navigate(slug ? profilePathBySlug(slug) : profilePathById(u.id));
                   }}
                 >
                   <Text numberOfLines={1} style={styles.itemTitle}>{u.displayName}</Text>

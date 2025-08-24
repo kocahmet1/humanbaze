@@ -13,6 +13,7 @@ import { useSelector, useDispatch as useReduxDispatch } from 'react-redux';
 import { RootState, AppDispatch as Dispatch } from '../../store';
 import { openModal } from '../../store/slices/uiSlice';
 import { reportEntry as reportEntryThunk } from '../../store/slices/entriesSlice';
+import { navigate, profileSelfPath, profilePathById, profilePathBySlug, articlePathBySlug } from '../../utils/navigation';
 
 interface Props { 
   entry: Entry; 
@@ -84,7 +85,7 @@ export const EntryItem: React.FC<Props> = ({ entry, article, currentUserId, entr
 
   const onShare = () => {
     // Simple share functionality - copy to clipboard
-    const shareUrl = `${window.location.origin}${window.location.pathname}${window.location.hash}`;
+    const shareUrl = `${window.location.href}`;
     navigator.clipboard.writeText(shareUrl).then(() => {
       // Could show a toast notification here
       console.log('Entry URL copied to clipboard');
@@ -108,14 +109,18 @@ export const EntryItem: React.FC<Props> = ({ entry, article, currentUserId, entr
     }
   };
 
-  const navigateToUserProfile = () => {
+  const navigateToUserProfile = async () => {
     if (entryAuthor) {
-      // Navigate using hash-based routing
       // If it's the current user, go to their own profile page
       if (currentUserId === entryAuthor.id) {
-        window.location.hash = '#/profile';
+        navigate(profileSelfPath);
       } else {
-        window.location.hash = `#/profile/${entryAuthor.id}`;
+        let slug = entryAuthor.slug;
+        if (!slug) {
+          try { slug = await usersService.ensureUserSlug(entryAuthor.id, entryAuthor.displayName || 'user'); } catch {}
+        }
+        const path = slug ? profilePathBySlug(slug) : profilePathById(entryAuthor.id);
+        navigate(path);
       }
     }
   };
@@ -257,7 +262,7 @@ export const EntryItem: React.FC<Props> = ({ entry, article, currentUserId, entr
           {article && (
             <TouchableOpacity 
               style={styles.articleLink}
-              onPress={() => window.location.hash = `#/article/${article.id}`}
+              onPress={() => navigate(articlePathBySlug(article.slug))}
             >
               <Text style={styles.articleLinkText}>
                 📝 {article.title}
@@ -526,6 +531,3 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.weights.semibold as any,
   },
 });
-
-
-

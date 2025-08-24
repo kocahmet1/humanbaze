@@ -11,6 +11,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../../store';
 import { loginWithEmail, loginWithGoogle, clearError } from '../../store/slices/authSlice';
 import { theme } from '../../styles/theme';
+import { navigate, homePath } from '../../utils/navigation';
 
 export const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -27,7 +28,7 @@ export const LoginScreen: React.FC = () => {
     try {
       await dispatch(loginWithEmail({ email, password })).unwrap();
       // Navigate to home after successful login
-      window.location.hash = '#/';
+      navigate(homePath);
     } catch (err: any) {
       Alert.alert('Login Failed', err.message || 'Failed to login');
     }
@@ -36,7 +37,7 @@ export const LoginScreen: React.FC = () => {
   // If user becomes authenticated (e.g., via social login), redirect to home
   useEffect(() => {
     if (user) {
-      window.location.hash = '#/';
+      navigate(homePath);
     }
   }, [user]);
 
@@ -50,13 +51,13 @@ export const LoginScreen: React.FC = () => {
 
   const navigateToRegister = () => {
     dispatch(clearError());
-    window.location.hash = '#/register';
+    navigate('/register');
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.logoContainer}>
-        <Text style={styles.logo} onPress={() => (window.location.hash = '#/')}>infopadd</Text>
+        <Text style={styles.logo} onPress={() => navigate(homePath)}>infopadd</Text>
         <Text style={styles.tagline}>The Social Wikipedia</Text>
       </View>
 

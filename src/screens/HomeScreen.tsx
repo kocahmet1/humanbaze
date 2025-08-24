@@ -15,6 +15,8 @@ import { fetchRecentArticles, fetchPopularArticles, fetchPopularArticlesLast24h 
 import { fetchLeaderboard } from '../store/slices/usersSlice';
 import { theme } from '../styles/theme';
 import { HistoryIcon, CommentsIcon } from '../components/icons';
+import { navigate, articlePathBySlug, profilePathBySlug, profilePathById } from '../utils/navigation';
+import { usersService } from '../services/users';
 
 // Import components
 import { NavigationSidebar } from '../components/NavigationSidebar';
@@ -55,9 +57,15 @@ export const HomeScreen: React.FC = () => {
     dispatch(fetchLeaderboard({ period: 'recent_creators', limit: 7 }));
   }, [dispatch]);
 
-  const handleUserPress = (userId: string) => {
-    // Navigate using hash-based routing
-    window.location.hash = `#/profile/${userId}`;
+  const handleUserPress = async (userId: string, userSlug?: string) => {
+    let slug = userSlug;
+    if (!slug) {
+      try {
+        const user = await usersService.getUserById(userId);
+        slug = user.slug || await usersService.ensureUserSlug(user.id, user.displayName || 'user');
+      } catch {}
+    }
+    navigate(slug ? profilePathBySlug(slug) : profilePathById(userId));
   };
 
   if (isMobile) {
@@ -81,7 +89,7 @@ export const HomeScreen: React.FC = () => {
                   <Text
                     style={styles.entryTitle}
                     numberOfLines={2}
-                    onPress={() => (window.location.hash = `#/article/${encodeURIComponent(article.id)}`)}
+                    onPress={() => navigate(articlePathBySlug(article.slug))}
                   >
                     {article.title}
                   </Text>
@@ -149,7 +157,7 @@ export const HomeScreen: React.FC = () => {
                       <Text
                         style={styles.entryTitle}
                         numberOfLines={2}
-                        onPress={() => (window.location.hash = `#/article/${encodeURIComponent(article.id)}`)}
+                        onPress={() => navigate(articlePathBySlug(article.slug))}
                       >
                         {article.title}
                       </Text>
